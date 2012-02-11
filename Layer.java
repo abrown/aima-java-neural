@@ -45,7 +45,7 @@ public class Layer {
      * @param input
      * @throws SizeDifferenceException 
      */
-    public void in(DataSet input) throws SizeDifferenceException{
+    public void in(ArrayList<Double> input) throws SizeDifferenceException{
         if( input.size() != this.size() ) 
             throw new SizeDifferenceException("DataSet size ("+input.size()+") and Layer size ("+this.size()+") do not match");
         // send to perceptrons
@@ -58,8 +58,8 @@ public class Layer {
      * Receives final output data from the network
      * @return 
      */
-    public DataSet out(){
-        DataSet output = new DataSet(this.perceptrons.size());
+    public ArrayList<Double> out(){
+        ArrayList<Double> output = new ArrayList<>(this.perceptrons.size());
         // wait until all processing is complete
         boolean complete;
         do{

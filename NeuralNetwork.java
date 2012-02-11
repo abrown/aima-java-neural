@@ -36,10 +36,10 @@ public class NeuralNetwork {
      * @return
      * @throws SizeDifferenceException 
      */
-    public int train(DataSet input, DataSet expected_output) throws SizeDifferenceException{
+    public int train(ArrayList<Double> input, ArrayList<Double> expected_output) throws SizeDifferenceException{
         // iterate until complete
         int iterations = 0;
-        DataSet output = null;
+        ArrayList<Double> output = null;
         do{
             iterations++;
             output = this.use(input);
@@ -57,8 +57,8 @@ public class NeuralNetwork {
      * @return a proportion of correct results within the dataset
      * @throws SizeDifferenceException 
      */
-    public float test(DataSet input, DataSet expected_output) throws SizeDifferenceException{
-        DataSet output = this.use(input);
+    public float test(ArrayList<Double> input, ArrayList<Double> expected_output) throws SizeDifferenceException{
+        ArrayList<Double> output = this.use(input);
         if( output.size() != expected_output.size() ) 
             throw new SizeDifferenceException("DataSet sizes (returned, "+output.size()+"; expected, "+expected_output.size()+") do not match");
         // create proportion
@@ -77,12 +77,12 @@ public class NeuralNetwork {
      * @return
      * @throws SizeDifferenceException 
      */
-    public DataSet use(DataSet input) throws SizeDifferenceException{
+    public ArrayList<Double> use(ArrayList<Double> input) throws SizeDifferenceException{
         // send input
         this.layers.get(0).in( input );
         // receive output
         int last = this.layers.size() - 1;
-        DataSet output = this.layers.get(last).out();
+        ArrayList<Double> output = this.layers.get(last).out();
         // return
         return output;
     }
