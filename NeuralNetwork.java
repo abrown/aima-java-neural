@@ -16,7 +16,7 @@ public class NeuralNetwork {
      * @param perceptrons_per_layer
      * @param g 
      */
-    public NeuralNetwork(int number_of_layers, int perceptrons_per_layer, ActivationFunction g){
+    public NeuralNetwork(int number_of_layers, int perceptrons_per_layer, ActivationFunction_I g){
         // setup
         this.layers = new ArrayList<Layer>();
         // create layers

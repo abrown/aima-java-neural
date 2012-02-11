@@ -14,14 +14,14 @@ public class Perceptron {
     Double bias;
     List<Double> weights;
     List<Double> input_queue;
-    ActivationFunction activation_function;
+    ActivationFunction_I activation_function;
     Double activation_result;
     
     /**
      * Constructor
      * @param g 
      */
-    public Perceptron(ActivationFunction g){
+    public Perceptron(ActivationFunction_I g){
         this.activation_function = g;
         this.bias = Math.random();
     }

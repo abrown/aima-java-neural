@@ -6,7 +6,7 @@ import aima.core.learning.neural.*;
  * @author Ravi Mohan
  * 
  */
-public class ActivationFunctionLogSig implements ActivationFunction {
+public class ActivationFunctionLogSig implements ActivationFunction_I {
 
 	public double activation(double parameter) {
 

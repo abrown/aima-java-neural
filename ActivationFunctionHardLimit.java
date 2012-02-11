@@ -6,7 +6,7 @@ import aima.core.learning.neural.*;
  * @author Ravi Mohan
  * 
  */
-public class ActivationFunctionHardLimit implements ActivationFunction {
+public class ActivationFunctionHardLimit implements ActivationFunction_I {
 
 	public double activation(double parameter) {
 

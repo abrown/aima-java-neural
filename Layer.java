@@ -17,7 +17,7 @@ public class Layer {
      * @param count
      * @param g 
      */
-    public Layer(int count, ActivationFunction g){
+    public Layer(int count, ActivationFunction_I g){
         // setup
         this.perceptrons = new ArrayList<Perceptron>();
         // create perceptrons
