@@ -8,6 +8,9 @@ import java.util.ArrayList;
  */
 public class NeuralNetwork {
     
+	/**
+	 * List of interconnected layers
+	 */
     public ArrayList<Layer> layers;
     
     /**

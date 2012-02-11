@@ -15,13 +15,16 @@ public class Perceptron implements Iterable{
     List<OutputPerceptron> outputs;
     HashMap<InputPerceptron, Double> activation;
     ActivationFunction_I activation_function;
-    double bias = 0.0d;
+    double bias;
     double result;
-    byte state = Perceptron.WAITING;
+    byte state;
     
+    /**
+     * Perceptron signal states
+     */
     public static final byte WAITING = 0;
     public static final byte RECEIVING = 1;
-    public static final byte SENDING = 1;
+    public static final byte SENDING = 2;
 
     /**
      * Constructor
@@ -30,6 +33,7 @@ public class Perceptron implements Iterable{
     public Perceptron(ActivationFunction_I g) {
         this.activation_function = g;
         this.bias = Math.random();
+        this.state = Perceptron.WAITING;
     }
     
     /**
@@ -37,6 +41,7 @@ public class Perceptron implements Iterable{
      */
     public Perceptron(){
         this.bias = Math.random();
+        this.state = Perceptron.WAITING;
     }
 
     /**
