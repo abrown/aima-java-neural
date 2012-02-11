@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
  *
  * @author andrew
  */
-public class Layer implements Iterable{
+public class Layer implements Iterable<Perceptron>{
 
     /**
      * List of perceptrons in this layer
@@ -62,7 +62,7 @@ public class Layer implements Iterable{
      * @return
      */
     public ArrayList<Double> out(){
-        ArrayList<Double> output = new ArrayList<>(this.perceptrons.size());
+        ArrayList<Double> output = new ArrayList<Double>(this.perceptrons.size());
         // wait until all processing is complete
         boolean complete;
         do{

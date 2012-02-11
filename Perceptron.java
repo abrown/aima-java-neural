@@ -9,7 +9,7 @@ import java.util.NoSuchElementException;
  *
  * @author andrew
  */
-public class Perceptron implements Iterable{
+public class Perceptron implements Iterable<InputPerceptron>{
 
     List<InputPerceptron> inputs;
     List<OutputPerceptron> outputs;
