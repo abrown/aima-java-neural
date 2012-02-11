@@ -1,17 +1,18 @@
 package aima.core.learning.neural2;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  *
  * @author andrew
  */
 public class Layer {
-    
-    public List<Perceptron> perceptrons;
-    
+
+    /**
+     * List of perceptrons in this layer
+     */
+    public ArrayList<Perceptron> perceptrons;
+
     /**
      * Constructor
      * @param count
