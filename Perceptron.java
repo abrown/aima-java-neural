@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Vector;
 
 /**
  *
@@ -12,10 +13,11 @@ import java.util.NoSuchElementException;
  */
 public class Perceptron implements Iterable{
 
-    List<InputNode> inputs;
-    List<OutputNode> outputs;
-    HashMap<InputNode, Double> activation;
-    ActivationFunction_I activation_function;
+    ArrayList<Perceptron> inputs;
+    ArrayList<Perceptron> outputs;
+    HashMap<Perceptron, Double> weights;
+    HashMap<Perceptron, Double> activation;
+    ActivationFunction_I function;
     double bias;
     double result;
     byte state;
@@ -32,10 +34,11 @@ public class Perceptron implements Iterable{
      * @param g
      */
     public Perceptron(ActivationFunction_I g) {
-    	this.inputs = new ArrayList<InputNode>();
-    	this.outputs = new ArrayList<OutputNode>();
-    	this.activation = new HashMap<InputNode, Double>();
-        this.activation_function = g;
+    	this.inputs = new ArrayList<Perceptron>();
+    	this.outputs = new ArrayList<Perceptron>();
+    	this.weights = new HashMap<Perceptron, Double>();
+    	this.activation = new HashMap<Perceptron, Double>();
+        this.function = g;
         this.bias = 0.0d;
         this.state = Perceptron.WAITING;
     }
@@ -44,9 +47,10 @@ public class Perceptron implements Iterable{
      * Constructor
      */
     public Perceptron(){
-    	this.inputs = new ArrayList<InputNode>();
-    	this.outputs = new ArrayList<OutputNode>();
-    	this.activation = new HashMap<InputNode, Double>();
+    	this.inputs = new ArrayList<Perceptron>();
+    	this.outputs = new ArrayList<Perceptron>();
+    	this.weights = new HashMap<Perceptron, Double>();
+    	this.activation = new HashMap<Perceptron, Double>();
         this.bias = 0.0d;
         this.state = Perceptron.WAITING;
     }
@@ -57,7 +61,13 @@ public class Perceptron implements Iterable{
      */
     public void addInput(Perceptron p) {
         double weight = Math.random() - 0.5;
-        this.inputs.add(new InputNode(p, weight));
+        this.weights.put(p, weight);
+        this.inputs.add(p);
+    }
+    
+    public void addInput(Perceptron p, double weight){
+    	this.weights.put(p, weight);
+    	this.inputs.add(p);
     }
 
     /**
@@ -65,16 +75,19 @@ public class Perceptron implements Iterable{
      * @param p 
      */
     public void addOutput(Perceptron p) {
-        this.outputs.add(new OutputNode(p));
+        this.outputs.add(p);
     }
 
     /**
-     * Receives inputs from the governing application
+     * Receives inputs from the governing application;
+     * implies there are no input perceptrons to this one.
      */
     public void in(double d) {
+    	// change state
+    	this.state = Perceptron.RECEIVING;
+    	// create stub perceptron if necessary
         if( this.inputs.size() == 0 ){
-            InputNode sole_input = new InputNode(1.0);
-            this.inputs.add(sole_input);
+        	this.addInput(new Perceptron(), 1.0);
         }
         // activate
         this.activation.put(this.inputs.get(0), d);
@@ -116,16 +129,16 @@ public class Perceptron implements Iterable{
         this.state = Perceptron.SENDING;
         // sum inputs
         double sum = 0.0;
-        for(InputNode p : this.inputs) {
-            sum += p.weight * this.activation.get(p);
+        for(Perceptron p : this.inputs) {
+            sum += this.weights.get(p) * this.activation.get(p);
         }
         // add bias
         sum += this.bias;
         // get activation function
         this.result = this.activation(sum);
         // send result to output perceptrons
-        for (OutputNode p : this.outputs) {
-            p.send(this.result);
+        for (Perceptron p : this.outputs) {
+            p.in(this, this.result);
         }
         // reset activation map
         this.activation.clear();
@@ -139,7 +152,7 @@ public class Perceptron implements Iterable{
      * @return
      */
     public double activation(double x) {
-        return this.activation_function.activation(x);
+        return this.function.activation(x);
     }
 
     /**
@@ -159,9 +172,9 @@ public class Perceptron implements Iterable{
     }
     
     /**
-     * Iterator for this perceptron
+     * Iterator for this perceptron; iterates over input perceptrons
      */
-    private class InputIterator implements Iterator<InputNode> {
+    private class InputIterator implements Iterator<Perceptron> {
 
         /**
          * Tracks the location in the list
@@ -180,9 +193,9 @@ public class Perceptron implements Iterable{
          * Returns the next element
          * @return
          */
-        public InputNode next(){
+        public Perceptron next(){
             if( !this.hasNext() ) throw new NoSuchElementException();
-            InputNode next = Perceptron.this.inputs.get(this.index);
+            Perceptron next = Perceptron.this.inputs.get(this.index);
             this.index++;
             return next;
         }
@@ -192,64 +205,6 @@ public class Perceptron implements Iterable{
          */
         public void remove(){
             throw new UnsupportedOperationException();
-        }
-    }
-
-    /**
-     * Labels an input perceptron and assigns it a weight
-     */
-    private class InputNode{
-        
-        /**
-         * The weight to be applied to this input perceptron
-         */
-        double weight = 0.0d;
-        
-        /**
-         * The perceptron link
-         */
-        Perceptron perceptron;
-           
-        /**
-         * Constructor
-         * @param node
-         * @param weight
-         */
-        public InputNode(Perceptron node, double weight){
-            this.perceptron = node;
-            this.weight = weight;
-        }
-        
-        /**
-         * Constructor, for application input
-         * @param weight
-         */
-        public InputNode(double weight){
-        	this.weight = weight;
-        }
-    }
-
-    /**
-     * Labels an output perceptron
-     */
-    private class OutputNode {
-
-    	Perceptron perceptron;
-    	
-        /**
-         * Constructor
-         * @param node
-         */
-        public OutputNode(Perceptron node) {
-            this.perceptron = node;
-        }
-
-        /**
-         * Passes the resulting value on to the output perceptron
-         * @param value
-         */
-        public void send(double value) {
-        	this.perceptron.in(Perceptron.this, value);
         }
     }
 }
