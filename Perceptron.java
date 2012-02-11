@@ -1,22 +1,28 @@
 package aima.core.learning.neural2;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-
+import java.util.NoSuchElementException;
 
 /**
  *
  * @author andrew
  */
-public class Perceptron {
+public class Perceptron implements Iterable{
 
-    List<Perceptron> inputs;
-    List<Perceptron> outputs;
-    Double bias;
-    List<Double> weights;
-    List<Double> input_queue;
+    List<InputPerceptron> inputs;
+    List<OutputPerceptron> outputs;
+    HashMap<InputPerceptron, Double> activation;
     ActivationFunction_I activation_function;
-    Double activation_result;
+    double bias = 0.0d;
+    double result;
+    byte state = Perceptron.WAITING;
     
+    public static final byte WAITING = 0;
+    public static final byte RECEIVING = 1;
+    public static final byte SENDING = 1;
+
     /**
      * Constructor
      * @param g
@@ -25,30 +31,44 @@ public class Perceptron {
         this.activation_function = g;
         this.bias = Math.random();
     }
+    
+    /**
+     * Constructor
+     */
+    public Perceptron(){
+        this.bias = Math.random();
+    }
 
     /**
      * Adds input perceptron
      * @param p
      */
-    public void addInput(Perceptron p){
-        this.inputs.add(p);
-        int i = this.inputs.indexOf(p);
-        this.weights.set(i, Math.random() - 0.5);
+    public void addInput(Perceptron p) {
+        InputPerceptron input = (InputPerceptron) p;
+        input.weight = Math.random() - 0.5;
+        this.inputs.add(input);
     }
-    
+
     /**
      * Adds output perceptron
      * @param p 
      */
-    public void addOutput(Perceptron p){
-        this.outputs.add(p);
+    public void addOutput(Perceptron p) {
+        OutputPerceptron output = (OutputPerceptron) p;
+        this.outputs.add(output);
     }
 
     /**
-     * 
+     * Receives inputs from the governing application
      */
-    public void in(double d){
-        this.input_queue.set(0, d);
+    public void in(double d) {
+        if( this.inputs.get(0) == null ){
+            InputPerceptron sole_input = new InputPerceptron();
+            sole_input.weight = 1.0d;
+            this.inputs.add(sole_input);
+        }
+        // activate
+        this.activation.put(this.inputs.get(0), d);
         this.out();
     }
 
@@ -57,49 +77,52 @@ public class Perceptron {
      * @param p
      * @param d 
      */
-    public void in(Perceptron p, double d){
-        int i = this.inputs.indexOf(p);
-        // if( i == -1 ) throw new Exception("Perceptron is not linked.");
-        this.input_queue.set(i, d);
-        if( this.isFull() ) this.out(); // TODO: perhaps just test for activation here, not wait for all inputs to come in; this might be necessary in recurrent networks
+    public void in(Perceptron p, double d) {
+        // change state
+        this.state = Perceptron.RECEIVING;
+        // input
+        int index = this.inputs.indexOf(p);
+        // if( index == -1 ) throw new UnlinkedPerceptronException();
+        this.activation.put(this.inputs.get(index), d);
+        // check if ready to activate this
+        if (this.isFull()) {
+            // TODO: perhaps just test for activation here, not wait for all inputs to come in; this might be necessary in recurrent networks
+            this.out(); 
+        }
     }
 
     /**
      * Tests whether the input queue is full
      * @return 
      */
-    public boolean isFull(){
-        return this.input_queue.size() == this.inputs.size();
-    }  
+    public boolean isFull() {
+        return this.activation.size() == this.inputs.size();
+    }
 
     /**
      * Consumes input values and produces output signal to downstream perceptrons
      */
-    public void out(){
+    public void out() {
+        // change state
+        this.state = Perceptron.SENDING;
+        // sum inputs
         double sum = 0.0;
-        // case: this perceptron has no inputs, values sent by application
-        if( this.inputs.size() == 0 ){
-            int end = this.input_queue.size();
-            for( int i = 0; i < end; i++ ){
-                sum += this.input_queue.get(i);
-            }
+        for(InputPerceptron p : this.inputs) {
+            sum += p.weight * this.activation.get(p);
         }
-        // case: sum all input values from input perceptrons
-        else{
-            int end = this.inputs.size();
-            for( int i = 0; i < end; i++ ){
-                sum += this.weights.get(i) * this.input_queue.get(i);
-            }
-            // add in the bias
-            sum += this.bias; // TODO: perhaps this applies to perceptrons with no inputs as well?
-        }
+        // add bias
+        sum += this.bias;
         // get activation function
-        this.activation_result = this.activation(sum);
+        this.result = this.activation(sum);
         // send result to output perceptrons
         int end = this.outputs.size();
-        for( int j = 0; j < end; j++ ){
-            this.outputs.get(j).in(this, activation_result);
+        for (OutputPerceptron p : this.outputs) {
+            p.in(this, this.result);
         }
+        // reset activation map
+        this.activation.clear();
+        // change state
+        this.state = Perceptron.WAITING;
     }
 
     /**
@@ -107,7 +130,7 @@ public class Perceptron {
      * @param x
      * @return
      */
-    public double activation(double x){
+    public double activation(double x) {
         return this.activation_function.activation(x);
     }
 
@@ -115,7 +138,94 @@ public class Perceptron {
      * Tests whether this perceptron has sent out an activation value
      * @return 
      */
-    public boolean isComplete(){
-        return (this.activation_result == null);
+    public boolean isComplete() {
+        return (this.state == Perceptron.WAITING);
+    }
+    
+    /**
+     * Makes the perceptron's inputs iterable
+     * @return 
+     */
+    public InputIterator iterator(){
+        return new InputIterator();
+    }
+    
+    /**
+     * Iterator for this perceptron
+     */
+    private class InputIterator implements Iterator<InputPerceptron> {
+
+        /**
+         * Tracks the location in the list
+         */
+        private int index = 0;
+
+        /**
+         * Checks whether the list is empty or ended
+         * @return
+         */
+        public boolean hasNext(){
+            return (this.index < Perceptron.this.inputs.size());
+        }
+
+        /**
+         * Returns the next element
+         * @return
+         */
+        public InputPerceptron next(){
+            if( !this.hasNext() ) throw new NoSuchElementException();
+            InputPerceptron next = Perceptron.this.inputs.get(this.index);
+            this.index++;
+            return next;
+        }
+
+        /**
+         * Removes an element; not supported in this implementation
+         */
+        public void remove(){
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Labels an input perceptron and assigns it a weight
+     */
+    private class InputPerceptron extends Perceptron {
+        
+        /**
+         * The weight to be applied to this input perceptron
+         */
+        double weight = 0.0d;
+        
+        /**
+         * Constructor
+         * @param g 
+         */
+        public InputPerceptron(ActivationFunction_I g) {
+            super(g);
+        }
+        
+        /**
+         * Constructor
+         */
+        public InputPerceptron(){
+            super();
+        }
+    }
+
+    /**
+     * Labels an output perceptron
+     */
+    private class OutputPerceptron extends Perceptron {
+
+        /**
+         * Constructor
+         * @param g
+         */
+        public OutputPerceptron(ActivationFunction_I g) {
+            super(g);
+        }
+
+        // Implement future output methods here
     }
 }

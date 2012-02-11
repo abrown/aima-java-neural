@@ -74,7 +74,7 @@ public class Layer implements Iterable{
         while( !complete );
         // get values
         for(int i = 0; i < this.perceptrons.size(); i++){
-            output.set(i, this.perceptrons.get(i).activation_result);
+            output.set(i, this.perceptrons.get(i).result);
         }
         // return
         return output;
@@ -111,7 +111,7 @@ public class Layer implements Iterable{
          * @return
          */
         public boolean hasNext(){
-            return (index < Layer.this.perceptrons.size());
+            return (this.index < Layer.this.perceptrons.size());
         }
 
         /**
@@ -120,8 +120,8 @@ public class Layer implements Iterable{
          */
         public Perceptron next(){
             if( !this.hasNext() ) throw new NoSuchElementException();
-            Perceptron next = Layer.this.perceptrons.get(index);
-            index++;
+            Perceptron next = Layer.this.perceptrons.get(this.index);
+            this.index++;
             return next;
         }
 
