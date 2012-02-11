@@ -1,7 +1,5 @@
 package aima.core.learning.neural2;
 
-import aima.core.learning.neural.*;
-
 /**
  * @author Ravi Mohan
  * 
@@ -9,7 +7,6 @@ import aima.core.learning.neural.*;
 public class ActivationFunctionHardLimit implements ActivationFunction_I {
 
 	public double activation(double parameter) {
-
 		if (parameter < 0.0) {
 			return 0.0;
 		} else {
