@@ -1,5 +1,6 @@
 package aima.core.learning.neural2;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -9,11 +10,11 @@ import java.util.NoSuchElementException;
  *
  * @author andrew
  */
-public class Perceptron implements Iterable<InputPerceptron>{
+public class Perceptron implements Iterable{
 
-    List<InputPerceptron> inputs;
-    List<OutputPerceptron> outputs;
-    HashMap<InputPerceptron, Double> activation;
+    List<InputNode> inputs;
+    List<OutputNode> outputs;
+    HashMap<InputNode, Double> activation;
     ActivationFunction_I activation_function;
     double bias;
     double result;
@@ -31,8 +32,11 @@ public class Perceptron implements Iterable<InputPerceptron>{
      * @param g
      */
     public Perceptron(ActivationFunction_I g) {
+    	this.inputs = new ArrayList<InputNode>();
+    	this.outputs = new ArrayList<OutputNode>();
+    	this.activation = new HashMap<InputNode, Double>();
         this.activation_function = g;
-        this.bias = Math.random();
+        this.bias = 0.0d;
         this.state = Perceptron.WAITING;
     }
     
@@ -40,7 +44,10 @@ public class Perceptron implements Iterable<InputPerceptron>{
      * Constructor
      */
     public Perceptron(){
-        this.bias = Math.random();
+    	this.inputs = new ArrayList<InputNode>();
+    	this.outputs = new ArrayList<OutputNode>();
+    	this.activation = new HashMap<InputNode, Double>();
+        this.bias = 0.0d;
         this.state = Perceptron.WAITING;
     }
 
@@ -49,9 +56,8 @@ public class Perceptron implements Iterable<InputPerceptron>{
      * @param p
      */
     public void addInput(Perceptron p) {
-        InputPerceptron input = (InputPerceptron) p;
-        input.weight = Math.random() - 0.5;
-        this.inputs.add(input);
+        double weight = Math.random() - 0.5;
+        this.inputs.add(new InputNode(p, weight));
     }
 
     /**
@@ -59,17 +65,15 @@ public class Perceptron implements Iterable<InputPerceptron>{
      * @param p 
      */
     public void addOutput(Perceptron p) {
-        OutputPerceptron output = (OutputPerceptron) p;
-        this.outputs.add(output);
+        this.outputs.add(new OutputNode(p));
     }
 
     /**
      * Receives inputs from the governing application
      */
     public void in(double d) {
-        if( this.inputs.get(0) == null ){
-            InputPerceptron sole_input = new InputPerceptron();
-            sole_input.weight = 1.0d;
+        if( this.inputs.size() == 0 ){
+            InputNode sole_input = new InputNode(1.0);
             this.inputs.add(sole_input);
         }
         // activate
@@ -112,7 +116,7 @@ public class Perceptron implements Iterable<InputPerceptron>{
         this.state = Perceptron.SENDING;
         // sum inputs
         double sum = 0.0;
-        for(InputPerceptron p : this.inputs) {
+        for(InputNode p : this.inputs) {
             sum += p.weight * this.activation.get(p);
         }
         // add bias
@@ -120,9 +124,8 @@ public class Perceptron implements Iterable<InputPerceptron>{
         // get activation function
         this.result = this.activation(sum);
         // send result to output perceptrons
-        int end = this.outputs.size();
-        for (OutputPerceptron p : this.outputs) {
-            p.in(this, this.result);
+        for (OutputNode p : this.outputs) {
+            p.send(this.result);
         }
         // reset activation map
         this.activation.clear();
@@ -158,7 +161,7 @@ public class Perceptron implements Iterable<InputPerceptron>{
     /**
      * Iterator for this perceptron
      */
-    private class InputIterator implements Iterator<InputPerceptron> {
+    private class InputIterator implements Iterator<InputNode> {
 
         /**
          * Tracks the location in the list
@@ -177,9 +180,9 @@ public class Perceptron implements Iterable<InputPerceptron>{
          * Returns the next element
          * @return
          */
-        public InputPerceptron next(){
+        public InputNode next(){
             if( !this.hasNext() ) throw new NoSuchElementException();
-            InputPerceptron next = Perceptron.this.inputs.get(this.index);
+            InputNode next = Perceptron.this.inputs.get(this.index);
             this.index++;
             return next;
         }
@@ -195,7 +198,7 @@ public class Perceptron implements Iterable<InputPerceptron>{
     /**
      * Labels an input perceptron and assigns it a weight
      */
-    private class InputPerceptron extends Perceptron {
+    private class InputNode{
         
         /**
          * The weight to be applied to this input perceptron
@@ -203,34 +206,50 @@ public class Perceptron implements Iterable<InputPerceptron>{
         double weight = 0.0d;
         
         /**
-         * Constructor
-         * @param g 
+         * The perceptron link
          */
-        public InputPerceptron(ActivationFunction_I g) {
-            super(g);
+        Perceptron perceptron;
+           
+        /**
+         * Constructor
+         * @param node
+         * @param weight
+         */
+        public InputNode(Perceptron node, double weight){
+            this.perceptron = node;
+            this.weight = weight;
         }
         
         /**
-         * Constructor
+         * Constructor, for application input
+         * @param weight
          */
-        public InputPerceptron(){
-            super();
+        public InputNode(double weight){
+        	this.weight = weight;
         }
     }
 
     /**
      * Labels an output perceptron
      */
-    private class OutputPerceptron extends Perceptron {
+    private class OutputNode {
 
+    	Perceptron perceptron;
+    	
         /**
          * Constructor
-         * @param g
+         * @param node
          */
-        public OutputPerceptron(ActivationFunction_I g) {
-            super(g);
+        public OutputNode(Perceptron node) {
+            this.perceptron = node;
         }
 
-        // Implement future output methods here
+        /**
+         * Passes the resulting value on to the output perceptron
+         * @param value
+         */
+        public void send(double value) {
+        	this.perceptron.in(Perceptron.this, value);
+        }
     }
 }
