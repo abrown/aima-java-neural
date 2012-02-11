@@ -8,7 +8,7 @@ import java.util.List;
  * @author andrew
  */
 public class Perceptron {
-    
+
     List<Perceptron> inputs;
     List<Perceptron> outputs;
     Double bias;
@@ -19,16 +19,16 @@ public class Perceptron {
     
     /**
      * Constructor
-     * @param g 
+     * @param g
      */
-    public Perceptron(ActivationFunction_I g){
+    public Perceptron(ActivationFunction_I g) {
         this.activation_function = g;
         this.bias = Math.random();
     }
-    
+
     /**
      * Adds input perceptron
-     * @param p 
+     * @param p
      */
     public void addInput(Perceptron p){
         this.inputs.add(p);
@@ -43,7 +43,7 @@ public class Perceptron {
     public void addOutput(Perceptron p){
         this.outputs.add(p);
     }
-    
+
     /**
      * 
      */
@@ -51,7 +51,7 @@ public class Perceptron {
         this.input_queue.set(0, d);
         this.out();
     }
-    
+
     /**
      * Accepts inputs from input perceptron
      * @param p
@@ -63,7 +63,7 @@ public class Perceptron {
         this.input_queue.set(i, d);
         if( this.isFull() ) this.out(); // TODO: perhaps just test for activation here, not wait for all inputs to come in; this might be necessary in recurrent networks
     }
-    
+
     /**
      * Tests whether the input queue is full
      * @return 
@@ -71,7 +71,7 @@ public class Perceptron {
     public boolean isFull(){
         return this.input_queue.size() == this.inputs.size();
     }  
-    
+
     /**
      * Consumes input values and produces output signal to downstream perceptrons
      */
@@ -101,16 +101,16 @@ public class Perceptron {
             this.outputs.get(j).in(this, activation_result);
         }
     }
-    
+
     /**
      * Returns activation function value
      * @param x
-     * @return 
+     * @return
      */
     public double activation(double x){
         return this.activation_function.activation(x);
     }
-    
+
     /**
      * Tests whether this perceptron has sent out an activation value
      * @return 
