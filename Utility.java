@@ -1,6 +1,5 @@
 package aima.core.learning.neural2;
 
-import aima.core.learning.neural.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
