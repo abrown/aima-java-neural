@@ -1,5 +1,7 @@
 package aima.core.learning.neural2;
 
+import java.io.Serializable;
+
 /**
  * @author Ravi Mohan
  * 
