@@ -1,11 +1,15 @@
 package aima.core.learning.neural2;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -16,43 +20,92 @@ import java.util.List;
  */
 public class Utility {
 
+    public static final String PACKAGE = "aima.core.learning.neural2";
+    public static final String DIR = "C:\\Data\\andrew\\code\\aima-java\\aima-core\\src\\main\\java\\aima\\core\\learning\\neural2";
+    
     public static void main(String[] args) {
-        try {
-            Class[] classes = Utility.getClasses("aima.core.learning.neural2");
-            for (Class c : classes) {
-                System.out.println(Utility.summarize(c) + "\n\n");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+//        try {
+//            Class[] classes = Utility.getClasses(Utility.PACKAGE);
+//            for (Class c : classes) {
+//                System.out.println(Utility.summarize(c) + "\n\n");
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+        for(File f : Utility.getFiles(Paths.get(Utility.DIR)) ){
+            String content = Utility.getFile(f.toPath());
+            System.out.println(f.getName());
+            System.out.println(Utility.uncode(content));
         }
-
+    }
+    
+    
+    public static String uncode(String classString){
+        int start = 0;
+        int end = classString.indexOf("{") + 1; // starts after class... {
+        int next = 0;
+        ArrayList<String> bodies = new ArrayList<>();
+        while( end != -1 ){
+            start = classString.indexOf("{", end);
+            end = Utility.findEndBrace(classString, start);
+            if( start > 0 && end > 0 ){
+                System.out.println(start+" "+end);
+                //bodies.add(classString.substring(start+1, end));
+            }      
+        }
+        // remove
+        for(String b : bodies){
+            classString = classString.replace(b, " ");
+        }
+        // return
+        return classString;
+    }
+    
+    private static int findEndBrace(String s, int start){
+        int end = s.indexOf("}", start);
+        int next = s.indexOf("{", start);
+        if( end < next ){
+            return end;
+        }
+        else{
+            return findEndBrace(s, end + 1);
+        }      
+    }
+    
+    private static String remove(String s, int start, int end){
+        return s.substring(0, start) + s.substring(end);
+    }
+    
+    
+    /**
+     * Summarizes classes
+     * @param c
+     * @return 
+     */
+    public static String summarize(Class c) {
+        // get name
+        String out = "CLASS:\n\t" + c.getName() + "\n\n";
+        // get properties
+        out += "PROPERTIES:\n";
+        for (Field f : c.getDeclaredFields()) {
+            out += "\t" + f.toString() + "\n";
+        }
+        // get methods
+        out += "METHODS:\n";
+        for (Method m : c.getDeclaredMethods()) {
+            out += "\t" + m.toString() + "\n";
+        }
+        // return
+        return out;
     }
 
-//    public static Class[] getClasses(Path path) {
-//        ArrayList<String> classes = new ArrayList<String>();
-//        ArrayList<Class> _classes = new ArrayList<Class>();
-//        Utility u = new Utility();
-//        ClassLoader classLoader = u.getClass().getClassLoader();
-//        // get files
-//        File[] files = Utility.getFiles(path);
-//        for (File f : files) {
-//            int end = f.getName().indexOf(".java");
-//            classes.add(f.getName().substring(0, end));
-//        }
-//        // initialize reflection classes
-//        for (String c : classes) {
-//            try {
-//                c = "aima.core.learning.neural." + c;
-//                System.out.println(c);
-//                _classes.add(Class.forName(c, true, classLoader));
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        // return
-//        return _classes.toArray(new Class[1]);
-//    }
-
+    /**
+     * Gets classes by package name
+     * @param packageName
+     * @return
+     * @throws ClassNotFoundException
+     * @throws IOException 
+     */
     public static Class[] getClasses(String packageName)
             throws ClassNotFoundException, IOException {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -106,7 +159,6 @@ public class Utility {
         File dir = new File(folder.toString());
         if (dir.isDirectory()) {
             FileFilter filter = new FileFilter() {
-
                 public boolean accept(File file) {
                     if (file.isFile() && !file.isDirectory()) {
                         String filename = file.getName();
@@ -122,21 +174,31 @@ public class Utility {
         // return
         return list;
     }
-
-    public static String summarize(Class c) {
-        // get name
-        String out = "CLASS:\n\t" + c.getName() + "\n\n";
-        // get properties
-        out += "PROPERTIES:\n";
-        for (Field f : c.getDeclaredFields()) {
-            out += "\t" + f.toString() + "\n";
+    
+    /**
+     * Returns file as string
+     * @param folder
+     * @return 
+     */
+    private static String getFile(Path file) {
+        File f = new File(file.toString());
+        StringBuilder s = new StringBuilder("");
+        try{
+            BufferedReader r = new BufferedReader( new FileReader(f) );
+            String line = "";
+            String ls = System.getProperty("line.separator");
+            while( (line = r.readLine()) != null ){
+                s.append(line);
+                s.append(ls);
+            }
         }
-        // get methods
-        out += "METHODS:\n";
-        for (Method m : c.getDeclaredMethods()) {
-            out += "\t" + m.toString() + "\n";
+        catch(FileNotFoundException e){
+            e.printStackTrace();
+        }
+        catch(IOException e){
+            e.printStackTrace();
         }
         // return
-        return out;
+        return s.toString();
     }
 }
