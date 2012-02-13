@@ -11,6 +11,11 @@ package aima.core.learning.neural2;
 public class UnlinkedPerceptronException extends Exception {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = -2507202395120358393L;
+
+	/**
      * Creates a new instance of <code>UnlinkedPerceptronException</code> without detail message.
      */
     public UnlinkedPerceptronException() {

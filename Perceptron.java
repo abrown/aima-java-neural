@@ -3,9 +3,7 @@ package aima.core.learning.neural2;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Vector;
 
 /**
  *
@@ -21,13 +19,6 @@ public class Perceptron implements Iterable{
     double bias;
     double result;
     byte state;
-    
-    /**
-     * Perceptron signal states
-     */
-    public static final byte WAITING = 0;
-    public static final byte RECEIVING = 1;
-    public static final byte SENDING = 2;
 
     /**
      * Constructor
@@ -40,7 +31,7 @@ public class Perceptron implements Iterable{
     	this.activation = new HashMap<Perceptron, Double>();
         this.function = g;
         this.bias = 0.0d;
-        this.state = Perceptron.WAITING;
+        this.state = NeuralNetwork.WAITING;
     }
     
     /**
@@ -52,22 +43,28 @@ public class Perceptron implements Iterable{
     	this.weights = new HashMap<Perceptron, Double>();
     	this.activation = new HashMap<Perceptron, Double>();
         this.bias = 0.0d;
-        this.state = Perceptron.WAITING;
+        this.state = NeuralNetwork.WAITING;
     }
 
     /**
-     * Adds input perceptron
+     * Adds input perceptron with a random weight
      * @param p
      */
     public void addInput(Perceptron p) {
         double weight = Math.random() - 0.5;
-        this.weights.put(p, weight);
-        this.inputs.add(p);
+        this.addInput(p, weight);
     }
     
+    /**
+     * Adds input perceptron
+     * @param p
+     * @param weight
+     */
     public void addInput(Perceptron p, double weight){
     	this.weights.put(p, weight);
     	this.inputs.add(p);
+    	// bi-directional connection
+    	p.outputs.add(this);
     }
 
     /**
@@ -76,6 +73,9 @@ public class Perceptron implements Iterable{
      */
     public void addOutput(Perceptron p) {
         this.outputs.add(p);
+        // bi-directional connection
+        p.weights.put(this, Math.random() - 0.5);
+        p.inputs.add(this);
     }
 
     /**
@@ -84,14 +84,11 @@ public class Perceptron implements Iterable{
      */
     public void in(double d) {
     	// change state
-    	this.state = Perceptron.RECEIVING;
+    	this.state = NeuralNetwork.RECEIVING;
+    	// debug
+        if( NeuralNetwork.DEBUG ) System.out.println("Application -[" + d + "]-> " + this);
     	// create stub perceptron if necessary
-        if( this.inputs.size() == 0 ){
-        	this.addInput(new Perceptron(), 1.0);
-        }
-        // activate
-        this.activation.put(this.inputs.get(0), d);
-        this.out();
+        this.out(d);
     }
 
     /**
@@ -101,7 +98,9 @@ public class Perceptron implements Iterable{
      */
     public void in(Perceptron p, double d) {
         // change state
-        this.state = Perceptron.RECEIVING;
+        this.state = NeuralNetwork.RECEIVING;
+        // debug
+        if( NeuralNetwork.DEBUG ) System.out.println(p + " -[" + d + "]-> " + this);
         // input
         int index = this.inputs.indexOf(p);
         // if( index == -1 ) throw new UnlinkedPerceptronException();
@@ -112,21 +111,32 @@ public class Perceptron implements Iterable{
             this.out(); 
         }
     }
-
+    
     /**
-     * Tests whether the input queue is full
-     * @return 
+     * Send immediately, without activation function,
+     * the passed value; used for sending data from
+     * governing application
+     * @param d
      */
-    public boolean isFull() {
-        return this.activation.size() == this.inputs.size();
+    public void out (double d){
+    	// change state
+    	this.state = NeuralNetwork.SENDING;
+    	// set result
+    	this.result = d;
+    	// send to outputs
+    	for (Perceptron output : this.outputs){
+    		output.in(this, this.result);
+    	}
+    	// change state
+    	this.state = NeuralNetwork.WAITING;
     }
-
+    	
     /**
      * Consumes input values and produces output signal to downstream perceptrons
      */
     public void out() {
         // change state
-        this.state = Perceptron.SENDING;
+        this.state = NeuralNetwork.SENDING;
         // sum inputs
         double sum = 0.0;
         for(Perceptron p : this.inputs) {
@@ -136,6 +146,8 @@ public class Perceptron implements Iterable{
         sum += this.bias;
         // get activation function
         this.result = this.activation(sum);
+        // debug
+        if( NeuralNetwork.DEBUG ) System.out.println(this + " = [" + this.result + "]");
         // send result to output perceptrons
         for (Perceptron p : this.outputs) {
             p.in(this, this.result);
@@ -143,7 +155,7 @@ public class Perceptron implements Iterable{
         // reset activation map
         this.activation.clear();
         // change state
-        this.state = Perceptron.WAITING;
+        this.state = NeuralNetwork.WAITING;
     }
 
     /**
@@ -156,11 +168,28 @@ public class Perceptron implements Iterable{
     }
 
     /**
+     * Tests whether the input queue is full
+     * @return 
+     */
+    public boolean isFull() {
+        return this.activation.size() == this.inputs.size();
+    }
+    
+    /**
      * Tests whether this perceptron has sent out an activation value
      * @return 
      */
     public boolean isComplete() {
-        return (this.state == Perceptron.WAITING);
+        return (this.state == NeuralNetwork.WAITING);
+    }
+    
+    /**
+     * Returns string representation of a perceptron
+     */
+    public String toString(){
+    	StringBuilder s = new StringBuilder("Perceptron@");
+    	s.append(Integer.toHexString(this.hashCode()));
+    	return s.toString();
     }
     
     /**

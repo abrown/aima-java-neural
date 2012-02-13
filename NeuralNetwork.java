@@ -7,6 +7,14 @@ import java.util.ArrayList;
  * @author andrew
  */
 public class NeuralNetwork {
+	
+	/**
+	 * Constants
+	 */
+    public static final byte WAITING = 0;
+    public static final byte RECEIVING = 1;
+    public static final byte SENDING = 2;
+	public static final boolean DEBUG = true;
     
 	/**
 	 * List of interconnected layers

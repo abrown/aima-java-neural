@@ -7,6 +7,11 @@ package aima.core.learning.neural2;
 public class SizeDifferenceException extends Exception {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1276768413294674897L;
+
+	/**
      * Creates a new instance of <code>SizeDifferenceException</code> without detail message.
      */
     public SizeDifferenceException() {
