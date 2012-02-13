@@ -9,7 +9,7 @@ import java.util.NoSuchElementException;
  *
  * @author andrew
  */
-public class Layer implements Iterable<Perceptron>, Serializable{
+public class Layer implements Iterable<Perceptron>, Serializable {
 
     /**
      * List of perceptrons in this layer
@@ -21,12 +21,12 @@ public class Layer implements Iterable<Perceptron>, Serializable{
      * @param count
      * @param g
      */
-    public Layer(int count, ActivationFunction_I g){
+    public Layer(int count, ActivationFunction_I g) {
         // setup
         this.perceptrons = new ArrayList<Perceptron>();
         // create perceptrons
-        for(int i = 0; i < count; i++){
-            this.perceptrons.add( new Perceptron(g) );
+        for (int i = 0; i < count; i++) {
+            this.perceptrons.add(new Perceptron(g));
         }
     }
 
@@ -35,9 +35,9 @@ public class Layer implements Iterable<Perceptron>, Serializable{
      * perceptron in the next layer
      * @param downstream
      */
-    public void connectTo(Layer downstream){
-        for(Perceptron a : this.perceptrons){
-            for(Perceptron b : downstream.perceptrons){
+    public void connectTo(Layer downstream) {
+        for (Perceptron a : this.perceptrons) {
+            for (Perceptron b : downstream.perceptrons) {
                 a.addOutput(b);
                 b.addInput(a);
             }
@@ -49,12 +49,13 @@ public class Layer implements Iterable<Perceptron>, Serializable{
      * @param input
      * @throws SizeDifferenceException
      */
-    public void in(ArrayList<Double> input) throws SizeDifferenceException{
-        if( input.size() != this.size() )
-            throw new SizeDifferenceException("DataSet size ("+input.size()+") and Layer size ("+this.size()+") do not match");
+    public void in(ArrayList<Double> input) throws SizeDifferenceException {
+        if (input.size() != this.size()) {
+            throw new SizeDifferenceException("DataSet size (" + input.size() + ") and Layer size (" + this.size() + ") do not match");
+        }
         // send to perceptrons
-        for(int i = 0; i < this.perceptrons.size(); i++){
-            this.perceptrons.get(i).in( input.get(i) );
+        for (int i = 0; i < this.perceptrons.size(); i++) {
+            this.perceptrons.get(i).in(input.get(i));
         }
     }
 
@@ -62,19 +63,20 @@ public class Layer implements Iterable<Perceptron>, Serializable{
      * Receives final output data from the network
      * @return
      */
-    public ArrayList<Double> out(){
+    public ArrayList<Double> out() {
         ArrayList<Double> output = new ArrayList<Double>(this.perceptrons.size());
         // wait until all processing is complete
         boolean complete;
-        do{
+        do {
             complete = true;
-            for(int i = 0; i < this.perceptrons.size(); i++){
-                if( !this.perceptrons.get(i).isComplete() ) complete = false;
+            for (int i = 0; i < this.perceptrons.size(); i++) {
+                if (!this.perceptrons.get(i).isComplete()) {
+                    complete = false;
+                }
             }
-        }
-        while( !complete );
+        } while (!complete);
         // get values
-        for(int i = 0; i < this.perceptrons.size(); i++){
+        for (int i = 0; i < this.perceptrons.size(); i++) {
             output.set(i, this.perceptrons.get(i).result);
         }
         // return
@@ -85,7 +87,7 @@ public class Layer implements Iterable<Perceptron>, Serializable{
      * Returns the number of perceptrons in this layer
      * @return
      */
-    public int size(){
+    public int size() {
         return this.perceptrons.size();
     }
 
@@ -93,14 +95,14 @@ public class Layer implements Iterable<Perceptron>, Serializable{
      * Makes the layer Iterable
      * @return
      */
-    public LayerIterator iterator(){
+    public LayerIterator iterator() {
         return new LayerIterator();
     }
 
     /**
      * Iterator for the layer
      */
-    private class LayerIterator implements Iterator<Perceptron>{
+    private class LayerIterator implements Iterator<Perceptron> {
 
         /**
          * Tracks the location in the list
@@ -111,7 +113,7 @@ public class Layer implements Iterable<Perceptron>, Serializable{
          * Checks whether the list is empty or ended
          * @return
          */
-        public boolean hasNext(){
+        public boolean hasNext() {
             return (this.index < Layer.this.perceptrons.size());
         }
 
@@ -119,8 +121,10 @@ public class Layer implements Iterable<Perceptron>, Serializable{
          * Returns the next element
          * @return
          */
-        public Perceptron next(){
-            if( !this.hasNext() ) throw new NoSuchElementException();
+        public Perceptron next() {
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
+            }
             Perceptron next = Layer.this.perceptrons.get(this.index);
             this.index++;
             return next;
@@ -129,9 +133,8 @@ public class Layer implements Iterable<Perceptron>, Serializable{
         /**
          * Removes an element; not supported in this implementation
          */
-        public void remove(){
+        public void remove() {
             throw new UnsupportedOperationException();
         }
     }
-
 }
