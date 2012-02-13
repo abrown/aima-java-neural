@@ -1,10 +1,12 @@
 package aima.core.learning.neural2;
 
+import java.io.Serializable;
+
 /**
  * @author Ravi Mohan
  * 
  */
-public class ActivationFunctionLogSig implements ActivationFunction_I {
+public class ActivationFunctionLogSig implements ActivationFunction_I, Serializable {
 
 	public double activation(double parameter) {
 

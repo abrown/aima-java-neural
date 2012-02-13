@@ -4,7 +4,7 @@ package aima.core.learning.neural2;
  * @author Ravi Mohan
  * 
  */
-public class ActivationFunctionHardLimit implements ActivationFunction_I {
+public class ActivationFunctionHardLimit implements ActivationFunction_I, Serializable {
 
 	public double activation(double parameter) {
 		if (parameter < 0.0) {
