@@ -1,5 +1,6 @@
 package aima.core.learning.neural2;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -8,7 +9,7 @@ import java.util.NoSuchElementException;
  *
  * @author andrew
  */
-public class Layer implements Iterable<Perceptron>{
+public class Layer implements Iterable<Perceptron>, Serializable{
 
     /**
      * List of perceptrons in this layer

@@ -1,12 +1,18 @@
 package aima.core.learning.neural2;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  *
  * @author andrew
  */
-public class NeuralNetwork {
+public class NeuralNetwork implements Serializable{
 	
 	/**
 	 * Constants
@@ -96,5 +102,32 @@ public class NeuralNetwork {
         ArrayList<Double> output = this.layers.get(last).out();
         // return
         return output;
+    }
+    
+    /**
+     * Saves a given network to file
+     * @param file
+     * @param net
+     * @throws java.io.IOException
+     * @throws java.io.FileNotFoundException 
+     */
+    public static void save(File file, NeuralNetwork net) throws java.io.IOException, java.io.FileNotFoundException{
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(file));
+        out.writeObject(net);
+        out.flush();
+        out.close();
+    }
+    
+    /**
+     * Loads a network from file
+     * @param file
+     * @return
+     * @throws java.io.IOException
+     * @throws java.io.FileNotFoundException
+     * @throws ClassNotFoundException 
+     */
+    public static NeuralNetwork load(File file) throws java.io.IOException, java.io.FileNotFoundException, ClassNotFoundException{
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
+        return (NeuralNetwork) in.readObject();
     }
 }
