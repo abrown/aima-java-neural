@@ -75,8 +75,8 @@ public class Layer implements Iterable<Perceptron>, Serializable {
             }
         } while (!complete);
         // get values
-        for (int i = 0; i < this.perceptrons.size(); i++) {
-            output.set(i, this.perceptrons.get(i).result);
+        for (Perceptron p : this.perceptrons) {
+            output.add(p.result);
         }
         // return
         return output;
