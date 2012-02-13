@@ -39,7 +39,6 @@ public class Layer implements Iterable<Perceptron>, Serializable {
         for (Perceptron a : this.perceptrons) {
             for (Perceptron b : downstream.perceptrons) {
                 a.addOutput(b);
-                b.addInput(a);
             }
         }
     }
