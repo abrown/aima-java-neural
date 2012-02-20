@@ -17,6 +17,6 @@ public class ActivationFunctionHardLimit implements ActivationFunction_I, Serial
 	}
 
 	public double deriv(double parameter) {
-		return 0.0;
+		return 1.0; // mathematically incorrect, but works with backpropagation
 	}
 }

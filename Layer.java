@@ -21,12 +21,12 @@ public class Layer implements Iterable<Perceptron>, Serializable {
      * @param count
      * @param g
      */
-    public Layer(int count, ActivationFunction_I g) {
+    public Layer(int count, ActivationFunction_I g, double sensitivity) {
         // setup
         this.perceptrons = new ArrayList<Perceptron>();
         // create perceptrons
         for (int i = 0; i < count; i++) {
-            this.perceptrons.add(new Perceptron(g));
+            this.perceptrons.add(new Perceptron(g, sensitivity));
         }
     }
 
@@ -48,9 +48,9 @@ public class Layer implements Iterable<Perceptron>, Serializable {
      * @param input
      * @throws SizeDifferenceException
      */
-    public void in(ArrayList<Double> input) throws SizeDifferenceException {
+    public void in(ArrayList<Double> input) throws SizeDifferenceException, WrongSizeException {
         if (input.size() != this.size()) {
-            throw new SizeDifferenceException("DataSet size (" + input.size() + ") and Layer size (" + this.size() + ") do not match");
+            throw new SizeDifferenceException("Dataset size (" + input.size() + ") and Layer size (" + this.size() + ") do not match");
         }
         // send to perceptrons
         for (int i = 0; i < this.perceptrons.size(); i++) {
@@ -80,6 +80,21 @@ public class Layer implements Iterable<Perceptron>, Serializable {
         }
         // return
         return output;
+    }
+    
+    /**
+     * Backpropagates errors from the given correct result
+     * @param expected_output
+     * @throws SizeDifferenceException a
+     */
+    public void backpropagate(ArrayList<Double> expected_output) throws SizeDifferenceException{
+        if (expected_output.size() != this.size()) {
+            throw new SizeDifferenceException("Dataset size (" + expected_output.size() + ") and Layer size (" + this.size() + ") do not match");
+        }
+        // send to upstream perceptrons
+        for (int i = 0; i < this.perceptrons.size(); i++) {
+            this.perceptrons.get(i).backpropagate_in(expected_output.get(i));
+        }
     }
 
     /**

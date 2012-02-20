@@ -20,6 +20,10 @@ public class NeuralNetwork implements Serializable {
     public static final byte WAITING = 0;
     public static final byte RECEIVING = 1;
     public static final byte SENDING = 2;
+    public static final byte COMPLETE = 3;
+    /**
+     * Turns on debugging
+     */
     public static final boolean DEBUG = true;
     /**
      * List of interconnected layers
@@ -30,14 +34,15 @@ public class NeuralNetwork implements Serializable {
      * Constructor
      * @param number_of_layers
      * @param perceptrons_per_layer
-     * @param g 
+     * @param function
+     * @param sensitivity
      */
-    public NeuralNetwork(int number_of_layers, int perceptrons_per_layer, ActivationFunction_I g) {
+    public NeuralNetwork(int number_of_layers, int perceptrons_per_layer, ActivationFunction_I function, double sensitivity) {
         // setup
         this.layers = new ArrayList<Layer>();
         // create layers
         for (int i = 0; i < number_of_layers; i++) {
-            this.layers.add(new Layer(perceptrons_per_layer, g));
+            this.layers.add(new Layer(perceptrons_per_layer, function, sensitivity));
         }
         // connect layers
         for (int j = 0; j < this.layers.size() - 1; j++) {
@@ -52,41 +57,63 @@ public class NeuralNetwork implements Serializable {
      * @return
      * @throws SizeDifferenceException 
      */
-    public int train(ArrayList<Double> input, ArrayList<Double> expected_output) throws SizeDifferenceException {
-        // iterate until complete
+    public int train(DataSet[] inputs, DataSet[] outputs, double target_error_rate) throws SizeDifferenceException, WrongSizeException {
+        if (inputs.length != outputs.length) {
+            throw new SizeDifferenceException("Must have the same number of training inputs and outputs");
+        }
+        // train until average error rate is below target error rate
         int iterations = 0;
-        ArrayList<Double> output = null;
+        double average_error_rate = 1.0;
         do {
             iterations++;
-            output = this.use(input);
-            // TODO: train by backpropagation
-        } while (!output.equals(expected_output));
+            double error_sum = 0.0;
+            for (int i = 0; i < inputs.length; i++) {
+                ArrayList<Double> output = new DataSet(this.use(inputs[i].toList()));
+                error_sum += DataSet.getErrorRate(new DataSet(output), outputs[i]);
+                // train
+                this.last().backpropagate(outputs[i]);
+            }
+            // calculate error rate
+            average_error_rate = error_sum / inputs.length;
+        } while (average_error_rate > target_error_rate);
         // return 
         return iterations;
     }
 
     /**
-     * Tests the given input for correctness
-     * @param input
-     * @param expected_output
+     * Tests multiple datasets, returning the average error
+     * @param inputs
+     * @param outputs
      * @return a proportion of correct results within the dataset
      * @throws SizeDifferenceException 
      */
-    public float test(ArrayList<Double> input, ArrayList<Double> expected_output) throws SizeDifferenceException {
-        ArrayList<Double> output = this.use(input);
-        if (output.size() != expected_output.size()) {
-            throw new SizeDifferenceException("DataSet sizes (returned, " + output.size() + "; expected, " + expected_output.size() + ") do not match");
+    public double test(DataSet[] inputs, DataSet[] outputs) throws SizeDifferenceException, WrongSizeException {
+        if (inputs.length != outputs.length) {
+            throw new SizeDifferenceException("Must have the same number of training inputs and outputs");
         }
-        // create proportion
-        int total = output.size();
-        int correct = 0;
-        for (int i = 0; i < total; i++) {
-            if (output.get(i) == expected_output.get(i)) {
-                correct++;
-            }
+        // find average error rate
+        double error_sum = 0.0;
+        for (int i = 0; i < inputs.length; i++) {
+            ArrayList<Double> output = new DataSet(this.use(inputs[i].toList()));
+            error_sum += DataSet.getErrorRate(new DataSet(output), outputs[i]);
+            // train
+            this.last().backpropagate(outputs[i]);
         }
-        // return
-        return correct / total;
+        // calculate error rate
+        return error_sum / inputs.length;
+   }
+    
+    /**
+     * Test a single dataset for correctness
+     * @param input
+     * @param expected_output
+     * @return
+     * @throws SizeDifferenceException
+     * @throws WrongSizeException 
+     */
+    public double test(DataSet input, DataSet expected_output)throws SizeDifferenceException, WrongSizeException{
+        DataSet out = new DataSet( this.use(input.toList()) );
+        return DataSet.getErrorRate(out, expected_output);
     }
 
     /**
@@ -95,14 +122,30 @@ public class NeuralNetwork implements Serializable {
      * @return
      * @throws SizeDifferenceException 
      */
-    public ArrayList<Double> use(ArrayList<Double> input) throws SizeDifferenceException {
+    public ArrayList<Double> use(ArrayList<Double> input) throws SizeDifferenceException, WrongSizeException {
         // send input
-        this.layers.get(0).in(input);
+        this.first().in(input);
         // receive output
-        int last = this.layers.size() - 1;
-        ArrayList<Double> output = this.layers.get(last).out();
+        ArrayList<Double> output = this.last().out();
         // return
         return output;
+    }
+
+    /**
+     * Returns the first layer in this network
+     * @return 
+     */
+    public Layer first() {
+        return this.layers.get(0);
+    }
+
+    /**
+     * Returns the last layer in this network
+     * @return 
+     */
+    public Layer last() {
+        int end = this.layers.size() - 1;
+        return this.layers.get(end);
     }
 
     /**

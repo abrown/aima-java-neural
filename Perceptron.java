@@ -16,22 +16,26 @@ public class Perceptron implements Iterable, Serializable {
     ArrayList<Perceptron> outputs;
     HashMap<Perceptron, Double> weights;
     HashMap<Perceptron, Double> activation;
+    HashMap<Perceptron, Double> error;
     ActivationFunction_I function;
     double bias;
     double result;
+    double sensitivity;
     byte state;
 
     /**
      * Constructor
      * @param g
      */
-    public Perceptron(ActivationFunction_I g) {
+    public Perceptron(ActivationFunction_I g, double sensitivity) {
         this.inputs = new ArrayList<Perceptron>();
         this.outputs = new ArrayList<Perceptron>();
         this.weights = new HashMap<Perceptron, Double>();
         this.activation = new HashMap<Perceptron, Double>();
+        this.error = new HashMap<Perceptron, Double>();
         this.function = g;
         this.bias = 0.0d;
+        this.sensitivity = sensitivity;
         this.state = NeuralNetwork.WAITING;
     }
 
@@ -43,7 +47,9 @@ public class Perceptron implements Iterable, Serializable {
         this.outputs = new ArrayList<Perceptron>();
         this.weights = new HashMap<Perceptron, Double>();
         this.activation = new HashMap<Perceptron, Double>();
+        this.error = new HashMap<Perceptron, Double>();
         this.bias = 0.0d;
+        this.sensitivity = 1.0d;
         this.state = NeuralNetwork.WAITING;
     }
 
@@ -81,9 +87,15 @@ public class Perceptron implements Iterable, Serializable {
 
     /**
      * Receives inputs from the governing application;
-     * implies there are no input perceptrons to this one.
+     * implies there are no input perceptrons to this one;
+     * makes this perceptron an input node
+     * @param d an input value
      */
-    public void in(double d) {
+    public void in(double d) throws WrongSizeException {
+        // warning
+        if (d > 1.0 || d < 0.0) {
+            throw new WrongSizeException("Perceptron inputs must fall between 0.0 and 1.0");
+        }
         // change state
         this.state = NeuralNetwork.RECEIVING;
         // debug
@@ -95,7 +107,7 @@ public class Perceptron implements Iterable, Serializable {
     }
 
     /**
-     * Accepts inputs from input perceptron
+     * Accepts inputs from an upstream perceptron
      * @param p
      * @param d 
      */
@@ -107,9 +119,7 @@ public class Perceptron implements Iterable, Serializable {
             System.out.println(p + " -[" + d + "]-> " + this);
         }
         // input
-        int index = this.inputs.indexOf(p);
-        // if( index == -1 ) throw new UnlinkedPerceptronException();
-        this.activation.put(this.inputs.get(index), d);
+        this.activation.put(p, d);
         // check if ready to activate this
         if (this.isFull()) {
             // TODO: perhaps just test for activation here, not wait for all inputs to come in; this might be necessary in recurrent networks
@@ -120,7 +130,8 @@ public class Perceptron implements Iterable, Serializable {
     /**
      * Send immediately, without activation function,
      * the passed value; used for sending data from
-     * governing application
+     * governing application; must only be used if this
+     * perceptron is an input node
      * @param d
      */
     public void out(double d) {
@@ -137,7 +148,8 @@ public class Perceptron implements Iterable, Serializable {
     }
 
     /**
-     * Consumes input values and produces output signal to downstream perceptrons
+     * Consumes input values and produces output 
+     * signal to downstream perceptrons. 
      */
     public void out() {
         // change state
@@ -150,7 +162,7 @@ public class Perceptron implements Iterable, Serializable {
         // add bias
         sum += this.bias;
         // get activation function
-        this.result = this.activation(sum);
+        this.result = this.function.activation(sum);
         // debug
         if (NeuralNetwork.DEBUG) {
             System.out.println(this + " = [" + this.result + "]");
@@ -160,18 +172,88 @@ public class Perceptron implements Iterable, Serializable {
             p.in(this, this.result);
         }
         // reset activation map
-        this.activation.clear();
+        //this.activation.clear();
         // change state
         this.state = NeuralNetwork.WAITING;
     }
 
     /**
-     * Returns activation function value
-     * @param x
-     * @return
+     * Receives errors (w_i,j * delta_j) from downstream perceptrons
+     * and stores them until a backpropagation can be made. Please note 
+     * differences from AIMA 18.24, p.734, which assumes a 
+     * fully-connected network and the use of vectors.
+     * @param p
+     * @param error 
      */
-    public double activation(double x) {
-        return this.function.activation(x);
+    public void backpropagate_in(Perceptron p, double error) {
+        // save delta
+        this.error.put(p, error);
+        // is full?
+        if (this.error.size() == this.outputs.size()) {
+            this.backpropagate_out();
+        }
+    }
+
+    /**
+     * Receives the correct training result from the application
+     * and calculates the error, backpropagating it to upstream
+     * perceptrons. Please note differences from
+     * AIMA 18.24, p.734, which assumes a fully-connected network
+     * and the use of vectors.
+     * @param d correct result from example set
+     */
+    public void backpropagate_in(double y) {
+        // calculate delta
+        double error = y - this.result; // y_j - a_j
+        this.error.put(null, error);
+        // send immediately
+        this.backpropagate_out();
+    }
+
+    /**
+     * Sends backpropagation results upstream, modifying each
+     * perceptrons weights on the way. Please note differences from
+     * AIMA 18.24, p.734, which assumes a fully-connected network
+     * and the use of vectors.
+     */
+    public void backpropagate_out() {
+        // calculate activation (in_i = sum(a_i))
+        double activation_sum = 0.0;
+        if (this.inputs.size() > 0) {
+            // case: inputs from upstream
+            for (Perceptron p : this.inputs) {
+                activation_sum += this.activation.get(p);
+            }
+        } else {
+            // case: input from application
+            activation_sum = this.result;
+        }
+        // calculate delta
+        double delta = 0.0;
+        // case: many outputs, sum error
+        if (this.outputs.size() > 0) {
+            double error_sum = 0.0;
+            for (Perceptron p : this.outputs) {
+                error_sum += this.error.get(p); // sum w_i,j * delta_j
+            }
+            delta = this.function.deriv(activation_sum) * error_sum; // TODO: check this, g'(in_i) * sum(w_i,j * delta_j)
+        } // case: output node, get error delta
+        else {
+            delta = this.function.deriv(activation_sum) * this.error.get(null);
+        }
+        // send upstream and modify weights
+        for (Perceptron p : this.inputs) {
+            // send upstream
+            double d = this.weights.get(p) * delta; // send w_i,j * delta_j
+            p.backpropagate_in(this, d);
+            // debug
+            if (NeuralNetwork.DEBUG) {
+                System.out.println(p + " <-[" + d + "]- " + this);
+            }
+            // modify weights
+            double new_weight = this.weights.get(p) + this.sensitivity * this.activation.get(p) * delta; // calculate w_i,j + alpha * a_i * delta_j
+            this.weights.put(p, new_weight);
+        }
     }
 
     /**
@@ -197,6 +279,35 @@ public class Perceptron implements Iterable, Serializable {
         StringBuilder s = new StringBuilder("Perceptron@");
         s.append(Integer.toHexString(this.hashCode()));
         return s.toString();
+    }
+
+    /**
+     * Prints debugging information for this perceptron
+     */
+    public void debug() {
+        StringBuilder s = new StringBuilder("Debugging ");
+        s.append(this.toString());
+        // inputs
+        s.append("\n  Inputs:\n");
+        for (Perceptron p : this.inputs) {
+            s.append("    ");
+            s.append(p);
+            if (this.activation.containsKey(p)) {
+                s.append(" sent ");
+                s.append(this.activation.get(p));
+            }
+            if (this.weights.containsKey(p)) {
+                s.append(" to weight ");
+                s.append(this.weights.get(p));
+            }
+            s.append("\n");
+        }
+        // outputs
+        s.append("  Result:\n");
+        s.append("   ");
+        s.append(this.result);
+        // print
+        System.out.println(s.toString());
     }
 
     /**
