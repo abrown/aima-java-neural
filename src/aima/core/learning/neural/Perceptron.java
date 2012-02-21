@@ -17,7 +17,7 @@ public class Perceptron implements Iterable, Serializable {
     HashMap<Perceptron, Double> weights;
     HashMap<Perceptron, Double> activation;
     HashMap<Perceptron, Double> error;
-    ActivationFunction_I function;
+    ActivationFunctionInterface function;
     double bias;
     double result;
     double sensitivity;
@@ -27,7 +27,7 @@ public class Perceptron implements Iterable, Serializable {
      * Constructor
      * @param g
      */
-    public Perceptron(ActivationFunction_I g, double sensitivity) {
+    public Perceptron(ActivationFunctionInterface g, double sensitivity) {
         this.inputs = new ArrayList<Perceptron>();
         this.outputs = new ArrayList<Perceptron>();
         this.weights = new HashMap<Perceptron, Double>();
@@ -162,7 +162,7 @@ public class Perceptron implements Iterable, Serializable {
         // add bias
         sum += this.bias;
         // get activation function
-        this.result = this.function.activation(sum);
+        this.result = this.function.activate(sum);
         // debug
         if (NeuralNetwork.DEBUG) {
             System.out.println(this + " = [" + this.result + "]");
@@ -236,10 +236,10 @@ public class Perceptron implements Iterable, Serializable {
             for (Perceptron p : this.outputs) {
                 error_sum += this.error.get(p); // sum w_i,j * delta_j
             }
-            delta = this.function.deriv(activation_sum) * error_sum; // TODO: check this, g'(in_i) * sum(w_i,j * delta_j)
+            delta = this.function.derivate(activation_sum) * error_sum; // TODO: check this, g'(in_i) * sum(w_i,j * delta_j)
         } // case: output node, get error delta
         else {
-            delta = this.function.deriv(activation_sum) * this.error.get(null);
+            delta = this.function.derivate(activation_sum) * this.error.get(null);
         }
         // send upstream and modify weights
         for (Perceptron p : this.inputs) {

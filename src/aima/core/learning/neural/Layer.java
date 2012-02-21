@@ -21,7 +21,7 @@ public class Layer implements Iterable<Perceptron>, Serializable {
      * @param count
      * @param g
      */
-    public Layer(int count, ActivationFunction_I g, double sensitivity) {
+    public Layer(int count, ActivationFunctionInterface g, double sensitivity) {
         // setup
         this.perceptrons = new ArrayList<Perceptron>();
         // create perceptrons

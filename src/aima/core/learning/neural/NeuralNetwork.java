@@ -40,7 +40,7 @@ public class NeuralNetwork implements Iterable<Layer>, Serializable {
      * @param function
      * @param sensitivity
      */
-    public NeuralNetwork(int number_of_layers, int perceptrons_per_layer, ActivationFunction_I function, double sensitivity) {
+    public NeuralNetwork(int number_of_layers, int perceptrons_per_layer, ActivationFunctionInterface function, double sensitivity) {
         // setup
         this.layers = new ArrayList<Layer>();
         // create layers

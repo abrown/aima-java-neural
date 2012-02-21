@@ -6,14 +6,13 @@ import java.io.Serializable;
  * @author Ravi Mohan
  * 
  */
-public class ActivationFunctionPureLinear implements ActivationFunction_I, Serializable {
+public class ActivationFunctionPureLinear implements ActivationFunctionInterface, Serializable {
 
-	public double activation(double parameter) {
-		return parameter;
-	}
+    public double activate(double parameter) {
+        return parameter;
+    }
 
-	public double deriv(double parameter) {
-
-		return 1;
-	}
+    public double derivate(double parameter) {
+        return 1;
+    }
 }
