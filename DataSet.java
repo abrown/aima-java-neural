@@ -14,7 +14,9 @@ public class DataSet extends ArrayList<Double> {
     public static double tolerance = 0.000001;
     
     /**
-     * Constructor
+     * Constructor; pass elements as parameters
+     * @example
+     * DataSet d = new DataSet(0.1, 0.2, 0.3, 0.4);
      * @param set 
      */
     public DataSet(Double... values){
