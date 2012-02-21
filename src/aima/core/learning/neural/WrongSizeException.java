@@ -1,4 +1,4 @@
-package aima.core.learning.neural2;
+package aima.core.learning.neural;
 
 /**
  * Thrown when the inputs to a perceptron fall outside allowed bounds,
