@@ -7,20 +7,23 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
- *
+ * Neural network
  * @author andrew
  */
-public class NeuralNetwork implements Serializable {
+public class NeuralNetwork implements Iterable<Layer>, Serializable {
 
     /**
-     * Constants
+     * State constants; used by perceptrons to notify state
      */
     public static final byte WAITING = 0;
     public static final byte RECEIVING = 1;
     public static final byte SENDING = 2;
     public static final byte COMPLETE = 3;
+    public static final byte TRAINING = 4;
     /**
      * Turns on debugging
      */
@@ -51,13 +54,31 @@ public class NeuralNetwork implements Serializable {
     }
 
     /**
+     * Uses the neural network to determine the output for the given input;
+     * sends the input, returns the output
+     * @param input
+     * @return 
+     * @throws SizeDifferenceException
+     * @throws WrongSizeException 
+     */
+    public DataList use(DataList input) throws SizeDifferenceException, WrongSizeException {
+        // send input
+        this.first().in(input);
+        // receive output
+        DataList output = this.last().out();
+        // return
+        return output;
+    }
+
+    /**
      * Trains a network against a given dataset
      * @param input
      * @param expected_output
-     * @return
-     * @throws SizeDifferenceException 
+     * @return the number of iterations spent training the network
+     * @throws SizeDifferenceException
+     * @throws WrongSizeException
      */
-    public int train(DataSet[] inputs, DataSet[] outputs, double target_error_rate) throws SizeDifferenceException, WrongSizeException {
+    public int train(DataList[] inputs, DataList[] outputs, double target_error_rate) throws SizeDifferenceException, WrongSizeException {
         if (inputs.length != outputs.length) {
             throw new SizeDifferenceException("Must have the same number of training inputs and outputs");
         }
@@ -68,8 +89,8 @@ public class NeuralNetwork implements Serializable {
             iterations++;
             double error_sum = 0.0;
             for (int i = 0; i < inputs.length; i++) {
-                ArrayList<Double> output = new DataSet(this.use(inputs[i].toList()));
-                error_sum += DataSet.getErrorRate(new DataSet(output), outputs[i]);
+                DataList output = this.use(inputs[i]);
+                error_sum += DataList.getErrorRate(output, outputs[i]);
                 // train
                 this.last().backpropagate(outputs[i]);
             }
@@ -84,56 +105,39 @@ public class NeuralNetwork implements Serializable {
      * Tests multiple datasets, returning the average error
      * @param inputs
      * @param outputs
-     * @return a proportion of correct results within the dataset
-     * @throws SizeDifferenceException 
+     * @return a proportion, average of correct results to total results
+     * @throws SizeDifferenceException
+     * @throws WrongSizeException
      */
-    public double test(DataSet[] inputs, DataSet[] outputs) throws SizeDifferenceException, WrongSizeException {
-        if (inputs.length != outputs.length) {
+    public double test(DataList[] inputs, DataList[] expected_outputs) throws SizeDifferenceException, WrongSizeException {
+        if (inputs.length != expected_outputs.length) {
             throw new SizeDifferenceException("Must have the same number of training inputs and outputs");
         }
         // find average error rate
         double error_sum = 0.0;
         for (int i = 0; i < inputs.length; i++) {
-            ArrayList<Double> output = new DataSet(this.use(inputs[i].toList()));
-            error_sum += DataSet.getErrorRate(new DataSet(output), outputs[i]);
-            // train
-            this.last().backpropagate(outputs[i]);
+            error_sum += this.test(inputs[i], expected_outputs[i]);
         }
         // calculate error rate
         return error_sum / inputs.length;
-   }
-    
+    }
+
     /**
      * Test a single dataset for correctness
      * @param input
      * @param expected_output
-     * @return
+     * @return a proportion, correct results to total results
      * @throws SizeDifferenceException
      * @throws WrongSizeException 
      */
-    public double test(DataSet input, DataSet expected_output)throws SizeDifferenceException, WrongSizeException{
-        DataSet out = new DataSet( this.use(input.toList()) );
-        return DataSet.getErrorRate(out, expected_output);
-    }
-
-    /**
-     * Uses the neural network to determine the output for the given input
-     * @param input
-     * @return
-     * @throws SizeDifferenceException 
-     */
-    public ArrayList<Double> use(ArrayList<Double> input) throws SizeDifferenceException, WrongSizeException {
-        // send input
-        this.first().in(input);
-        // receive output
-        ArrayList<Double> output = this.last().out();
-        // return
-        return output;
+    public double test(DataList input, DataList expected_output) throws SizeDifferenceException, WrongSizeException {
+        DataList out = this.use(input);
+        return DataList.getErrorRate(out, expected_output);
     }
 
     /**
      * Returns the first layer in this network
-     * @return 
+     * @return the first layer
      */
     public Layer first() {
         return this.layers.get(0);
@@ -141,7 +145,7 @@ public class NeuralNetwork implements Serializable {
 
     /**
      * Returns the last layer in this network
-     * @return 
+     * @return the last layer
      */
     public Layer last() {
         int end = this.layers.size() - 1;
@@ -149,7 +153,7 @@ public class NeuralNetwork implements Serializable {
     }
 
     /**
-     * Saves a given network to file
+     * Saves a given neural network to file
      * @param file
      * @param net
      * @throws java.io.IOException
@@ -173,5 +177,52 @@ public class NeuralNetwork implements Serializable {
     public static NeuralNetwork load(File file) throws java.io.IOException, java.io.FileNotFoundException, ClassNotFoundException {
         ObjectInputStream in = new ObjectInputStream(new FileInputStream(file));
         return (NeuralNetwork) in.readObject();
+    }
+
+    /**
+     * Makes the network Iterable
+     * @return
+     */
+    public NeuralNetworkIterator iterator() {
+        return new NeuralNetworkIterator();
+    }
+
+    /**
+     * Iterator for the layer
+     */
+    private class NeuralNetworkIterator implements Iterator<Layer> {
+
+        /**
+         * Tracks the location in the list
+         */
+        private int index = 0;
+
+        /**
+         * Checks whether the list is empty or ended
+         * @return
+         */
+        public boolean hasNext() {
+            return (this.index < NeuralNetwork.this.layers.size());
+        }
+
+        /**
+         * Returns the next element
+         * @return
+         */
+        public Layer next() {
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
+            }
+            Layer next = NeuralNetwork.this.layers.get(this.index);
+            this.index++;
+            return next;
+        }
+
+        /**
+         * Removes an element; not supported in this implementation
+         */
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }
