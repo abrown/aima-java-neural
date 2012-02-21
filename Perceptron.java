@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- *
+ * Neural network perceptron
  * @author andrew
  */
 public class Perceptron implements Iterable, Serializable {
@@ -120,8 +120,8 @@ public class Perceptron implements Iterable, Serializable {
         }
         // input
         this.activation.put(p, d);
-        // check if ready to activate this
-        if (this.isFull()) {
+        // send downstream once full
+        if ( this.activation.size() == this.inputs.size() ) {
             // TODO: perhaps just test for activation here, not wait for all inputs to come in; this might be necessary in recurrent networks
             this.out();
         }
@@ -171,8 +171,6 @@ public class Perceptron implements Iterable, Serializable {
         for (Perceptron p : this.outputs) {
             p.in(this, this.result);
         }
-        // reset activation map
-        //this.activation.clear();
         // change state
         this.state = NeuralNetwork.WAITING;
     }
@@ -188,7 +186,7 @@ public class Perceptron implements Iterable, Serializable {
     public void backpropagate_in(Perceptron p, double error) {
         // save delta
         this.error.put(p, error);
-        // is full?
+        // send upstream once full
         if (this.error.size() == this.outputs.size()) {
             this.backpropagate_out();
         }
@@ -206,7 +204,7 @@ public class Perceptron implements Iterable, Serializable {
         // calculate delta
         double error = y - this.result; // y_j - a_j
         this.error.put(null, error);
-        // send immediately
+        // send upstream immediately
         this.backpropagate_out();
     }
 
@@ -217,6 +215,8 @@ public class Perceptron implements Iterable, Serializable {
      * and the use of vectors.
      */
     public void backpropagate_out() {
+        // change state
+        this.state = NeuralNetwork.TRAINING;
         // calculate activation (in_i = sum(a_i))
         double activation_sum = 0.0;
         if (this.inputs.size() > 0) {
@@ -254,14 +254,8 @@ public class Perceptron implements Iterable, Serializable {
             double new_weight = this.weights.get(p) + this.sensitivity * this.activation.get(p) * delta; // calculate w_i,j + alpha * a_i * delta_j
             this.weights.put(p, new_weight);
         }
-    }
-
-    /**
-     * Tests whether the input queue is full
-     * @return 
-     */
-    public boolean isFull() {
-        return this.activation.size() == this.inputs.size();
+        // change state
+        this.state = NeuralNetwork.WAITING;
     }
 
     /**
