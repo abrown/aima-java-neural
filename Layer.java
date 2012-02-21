@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- *
+ * Neural network layer
  * @author andrew
  */
 public class Layer implements Iterable<Perceptron>, Serializable {
@@ -48,7 +48,7 @@ public class Layer implements Iterable<Perceptron>, Serializable {
      * @param input
      * @throws SizeDifferenceException
      */
-    public void in(ArrayList<Double> input) throws SizeDifferenceException, WrongSizeException {
+    public void in(DataList input) throws SizeDifferenceException, WrongSizeException {
         if (input.size() != this.size()) {
             throw new SizeDifferenceException("Dataset size (" + input.size() + ") and Layer size (" + this.size() + ") do not match");
         }
@@ -62,8 +62,8 @@ public class Layer implements Iterable<Perceptron>, Serializable {
      * Receives final output data from the network
      * @return
      */
-    public ArrayList<Double> out() {
-        ArrayList<Double> output = new ArrayList<Double>(this.perceptrons.size());
+    public DataList out() {
+        DataList output = new DataList(this.perceptrons.size());
         // wait until all processing is complete
         boolean complete;
         do {
@@ -81,15 +81,15 @@ public class Layer implements Iterable<Perceptron>, Serializable {
         // return
         return output;
     }
-    
+
     /**
      * Backpropagates errors from the given correct result
      * @param expected_output
      * @throws SizeDifferenceException a
      */
-    public void backpropagate(ArrayList<Double> expected_output) throws SizeDifferenceException{
+    public void backpropagate(DataList expected_output) throws SizeDifferenceException {
         if (expected_output.size() != this.size()) {
-            throw new SizeDifferenceException("Dataset size (" + expected_output.size() + ") and Layer size (" + this.size() + ") do not match");
+            throw new SizeDifferenceException("Data size (" + expected_output.size() + ") and Layer size (" + this.size() + ") do not match");
         }
         // send to upstream perceptrons
         for (int i = 0; i < this.perceptrons.size(); i++) {
