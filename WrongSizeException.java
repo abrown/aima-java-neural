@@ -1,17 +1,14 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package aima.core.learning.neural2;
 
 /**
- *
+ * Thrown when the inputs to a perceptron fall outside allowed bounds,
+ * i.e. 0.0 and 1.0.
  * @author andrew
  */
 public class WrongSizeException extends Exception {
 
     /**
-     * 
+     * Serial version UID
      */
     private static final long serialVersionUID = -6640902913211094231L;
 

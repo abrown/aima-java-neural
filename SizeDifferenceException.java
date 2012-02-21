@@ -1,13 +1,14 @@
 package aima.core.learning.neural2;
 
 /**
- *
+ * Thrown when two lists are to be compared, but they are of different
+ * lengths.
  * @author andrew
  */
 public class SizeDifferenceException extends Exception {
 
     /**
-     * 
+     * Serial version UID
      */
     private static final long serialVersionUID = 1276768413294674897L;
 
