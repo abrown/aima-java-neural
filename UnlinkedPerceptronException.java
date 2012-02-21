@@ -1,21 +1,18 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package aima.core.learning.neural2;
 
 /**
- *
+ * Is thrown when a perceptron is ordered to send a signal, but does not
+ * know where to send it to
  * @author andrew
  */
 public class UnlinkedPerceptronException extends Exception {
 
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = -2507202395120358393L;
+     * 
+     */
+    private static final long serialVersionUID = -2507202395120358393L;
 
-	/**
+    /**
      * Creates a new instance of <code>UnlinkedPerceptronException</code> without detail message.
      */
     public UnlinkedPerceptronException() {

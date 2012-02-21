@@ -11,6 +11,11 @@ package aima.core.learning.neural2;
 public class WrongSizeException extends Exception {
 
     /**
+     * 
+     */
+    private static final long serialVersionUID = -6640902913211094231L;
+
+    /**
      * Creates a new instance of <code>WrongSizeException</code> without detail message.
      */
     public WrongSizeException() {
